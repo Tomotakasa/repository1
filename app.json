@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "町内会班長アプリ",
+    "slug": "chonaikai-hancho",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#2E7D32"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.chonaikai.hancho",
+      "infoPlist": {
+        "NSContactsUsageDescription": "住民の連絡先情報を管理するために使用します。"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#2E7D32"
+      },
+      "package": "com.chonaikai.hancho"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "scheme": "chonaikai-hancho"
+  }
+}
