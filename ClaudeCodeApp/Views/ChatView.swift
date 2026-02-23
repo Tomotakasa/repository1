@@ -540,6 +540,7 @@ struct AddProfileView: View {
     @State private var emoji = "😊"
     @State private var role: FamilyRole = .adult
     @State private var color = "#4A90D9"
+    @State private var workType: WorkType? = nil
 
     let colors = ["#4A90D9","#E74C3C","#2ECC71","#F39C12","#9B59B6","#1ABC9C","#E67E22","#34495E"]
 
@@ -556,6 +557,20 @@ struct AddProfileView: View {
                 }
                 .pickerStyle(.segmented)
                 .onChange(of: role) { r in emoji = r.defaultEmojis.first ?? "😊" }
+            }
+            if role == .adult {
+                Section("お仕事の種類（任意）") {
+                    Picker("職業", selection: Binding(
+                        get: { workType },
+                        set: { workType = $0 }
+                    )) {
+                        Text("設定しない").tag(WorkType?.none)
+                        ForEach(WorkType.allCases) { wt in
+                            Text("\(wt.emoji) \(wt.displayName)").tag(WorkType?.some(wt))
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
             }
             Section("アイコン") {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 8), spacing: 12) {
@@ -588,7 +603,8 @@ struct AddProfileView: View {
                 Button("追加") {
                     pm.addProfile(FamilyProfile(
                         name: name.isEmpty ? "新しいプロフィール" : name,
-                        iconEmoji: emoji, colorHex: color, role: role))
+                        iconEmoji: emoji, colorHex: color, role: role,
+                        workType: role == .adult ? workType : nil))
                     dismiss()
                 }
             }
