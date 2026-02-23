@@ -8,7 +8,6 @@ struct FamilyProfile: Identifiable, Codable, Equatable {
     var iconEmoji: String   // アバター絵文字
     var colorHex: String    // テーマカラー
     var role: FamilyRole
-    var workType: WorkType? // 職業（大人のみ）
     var createdAt: Date
 
     init(
@@ -17,7 +16,6 @@ struct FamilyProfile: Identifiable, Codable, Equatable {
         iconEmoji: String = "😊",
         colorHex: String = "#4A90D9",
         role: FamilyRole = .adult,
-        workType: WorkType? = nil,
         createdAt: Date = Date()
     ) {
         self.id = id
@@ -25,7 +23,6 @@ struct FamilyProfile: Identifiable, Codable, Equatable {
         self.iconEmoji = iconEmoji
         self.colorHex = colorHex
         self.role = role
-        self.workType = workType
         self.createdAt = createdAt
     }
 
@@ -72,62 +69,6 @@ enum FamilyRole: String, Codable, CaseIterable {
         case .adult: return ""
         case .child: return "\nユーザーは子どもです。やさしく、かわいらしく、短めに答えてください。難しい言葉は使わないでください。"
         case .elderly: return "\nユーザーはシニアの方です。丁寧で分かりやすい言葉を使い、手順は一つひとつ丁寧に説明してください。"
-        }
-    }
-}
-
-// MARK: - Work Type (職業種別)
-enum WorkType: String, Codable, CaseIterable, Identifiable {
-    case powerCompany  = "power_company"   // 電力会社
-    case teacher       = "teacher"         // 教師
-    case nurse         = "nurse"           // 看護師
-    case office        = "office"          // 一般事務
-    case sales         = "sales"           // 営業
-    case engineer      = "engineer"        // エンジニア
-    case other         = "other"           // その他
-
-    var id: String { rawValue }
-
-    var displayName: String {
-        switch self {
-        case .powerCompany: return "電力会社"
-        case .teacher:      return "教師・学校"
-        case .nurse:        return "医療・看護"
-        case .office:       return "事務・管理"
-        case .sales:        return "営業・接客"
-        case .engineer:     return "エンジニア"
-        case .other:        return "その他"
-        }
-    }
-
-    var emoji: String {
-        switch self {
-        case .powerCompany: return "⚡"
-        case .teacher:      return "📚"
-        case .nurse:        return "🏥"
-        case .office:       return "🗂️"
-        case .sales:        return "💼"
-        case .engineer:     return "💻"
-        case .other:        return "🔧"
-        }
-    }
-
-    /// 仕事ツール専用システムプロンプト
-    var systemPromptContext: String {
-        switch self {
-        case .powerCompany:
-            return """
-            ユーザーは電力会社の社員です。
-            電力設備・送配電・保安規程・現場作業・停電対応などの業務に精通した視点で回答してください。
-            報告書類は電力業界の標準的な書式・文体（です・ます調、専門用語を適切に使用）で作成してください。
-            """
-        case .teacher:
-            return """
-            ユーザーは高校教師です。
-            学習指導要領・教育心理・授業設計・生徒指導の観点から回答してください。
-            文書は学校現場で使われる丁寧な文体（ですます調）で作成してください。
-            """
-        default: return ""
         }
     }
 }

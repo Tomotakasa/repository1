@@ -206,20 +206,6 @@ struct EditProfileView: View {
                 }
                 .pickerStyle(.segmented)
             }
-            if profile.role == .adult {
-                Section("お仕事の種類（任意）") {
-                    Picker("職業", selection: Binding(
-                        get: { profile.workType },
-                        set: { profile.workType = $0 }
-                    )) {
-                        Text("設定しない").tag(WorkType?.none)
-                        ForEach(WorkType.allCases) { wt in
-                            Text("\(wt.emoji) \(wt.displayName)").tag(WorkType?.some(wt))
-                        }
-                    }
-                    .pickerStyle(.menu)
-                }
-            }
             Section("アイコン") {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 8), spacing: 12) {
                     ForEach(profile.role.defaultEmojis, id: \.self) { e in

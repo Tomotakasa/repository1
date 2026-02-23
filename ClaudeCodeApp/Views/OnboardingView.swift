@@ -345,7 +345,6 @@ struct CreateProfileStepView: View {
     @State private var selectedEmoji = "😊"
     @State private var selectedRole: FamilyRole = .adult
     @State private var selectedColor = "#4A90D9"
-    @State private var selectedWorkType: WorkType? = nil
 
     let presetColors = ["#4A90D9", "#E74C3C", "#2ECC71", "#F39C12", "#9B59B6", "#1ABC9C"]
 
@@ -461,60 +460,12 @@ struct CreateProfileStepView: View {
                     .padding(.horizontal)
                 }
 
-                // 職業選択（大人のみ）
-                if selectedRole == .adult {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("お仕事の種類（任意）")
-                            .font(.headline)
-                            .padding(.horizontal)
-                        Text("設定すると仕事専用ツールが使えます")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .padding(.horizontal)
-
-                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-                            // 「設定しない」選択肢
-                            Button {
-                                selectedWorkType = nil
-                            } label: {
-                                HStack {
-                                    Text("🚫").font(.body)
-                                    Text("設定しない").font(.subheadline)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 10)
-                                .background(selectedWorkType == nil ? Color.accentColor : Color(.systemGray5))
-                                .foregroundColor(selectedWorkType == nil ? .white : .primary)
-                                .cornerRadius(12)
-                            }
-
-                            ForEach(WorkType.allCases) { wt in
-                                Button {
-                                    selectedWorkType = wt
-                                } label: {
-                                    HStack {
-                                        Text(wt.emoji).font(.body)
-                                        Text(wt.displayName).font(.subheadline).lineLimit(1)
-                                    }
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 10)
-                                    .background(selectedWorkType == wt ? Color.accentColor : Color(.systemGray5))
-                                    .foregroundColor(selectedWorkType == wt ? .white : .primary)
-                                    .cornerRadius(12)
-                                }
-                            }
-                        }
-                        .padding(.horizontal)
-                    }
-                }
-
                 Button {
                     let profile = FamilyProfile(
                         name: name.isEmpty ? "私" : name,
                         iconEmoji: selectedEmoji,
                         colorHex: selectedColor,
-                        role: selectedRole,
-                        workType: selectedRole == .adult ? selectedWorkType : nil
+                        role: selectedRole
                     )
                     profileManager.addProfile(profile)
                     onNext()

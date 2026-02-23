@@ -7,19 +7,11 @@ import UniformTypeIdentifiers
 struct AIToolsView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) var dismiss
-    @ObservedObject private var profileManager = ProfileManager.shared
-    @State private var showWorkTools = false
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
-                    // 仕事ツール（職業設定がある場合のみ表示）
-                    if let workType = profileManager.currentProfile?.workType,
-                       profileManager.currentProfile?.role == .adult {
-                        WorkToolsBannerView(workType: workType)
-                    }
-
                     // ビジネスツール
                     ToolSection(title: "💼 ビジネス", tools: [
                         ToolCard(emoji: "🎙️", title: "ボイスメモ → 議事録",
@@ -125,47 +117,6 @@ struct ToolCard: Identifiable {
     let title: String
     let desc: String
     let destination: AnyView
-}
-
-// MARK: - Work Tools Banner (職業別ツールへの導線)
-struct WorkToolsBannerView: View {
-    let workType: WorkType
-    @State private var showWorkTools = false
-
-    var body: some View {
-        Button {
-            showWorkTools = true
-        } label: {
-            HStack(spacing: 14) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.accentColor)
-                        .frame(width: 50, height: 50)
-                    Text(workType.emoji)
-                        .font(.title2)
-                }
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("\(workType.displayName)の仕事ツール")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    Text("報告書・書類作成など業務専用ツール")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-            .padding()
-            .background(Color.accentColor.opacity(0.08))
-            .cornerRadius(14)
-        }
-        .buttonStyle(.plain)
-        .sheet(isPresented: $showWorkTools) {
-            WorkToolsView(workType: workType)
-        }
-    }
 }
 
 // MARK: - 🎙️ ボイスメモ → 議事録・TODO
