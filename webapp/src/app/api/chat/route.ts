@@ -7,8 +7,7 @@ interface RequestBody {
   messages: { role: 'user' | 'assistant'; content: string }[]
   settings: {
     llmBackend: 'claude' | 'ollama' | 'openai-compatible'
-    claudeApiKey: string
-    claudeModel: string
+    claudeModel: string       // APIキーはサーバー側環境変数で管理
     ollamaEndpoint: string
     ollamaModel: string
     customEndpoint: string
@@ -16,6 +15,9 @@ interface RequestBody {
     customModel: string
   }
 }
+
+const SYSTEM_PROMPT =
+  'あなたは優秀なAIアシスタントです。コードの質問にも、日常の質問にも丁寧に答えてください。'
 
 export async function POST(req: NextRequest) {
   const body: RequestBody = await req.json()
@@ -32,19 +34,21 @@ async function handleClaude(
   messages: RequestBody['messages'],
   settings: RequestBody['settings']
 ) {
-  if (!settings.claudeApiKey) {
+  // APIキーはサーバー側の環境変数から取得（クライアントには渡さない）
+  const apiKey = process.env.CLAUDE_API_KEY
+  if (!apiKey) {
     return new Response(
-      JSON.stringify({ error: 'Claude APIキーが設定されていません。設定画面で入力してください。' }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: 'サーバーにCLAUDE_API_KEYが設定されていません。Vercel環境変数を確認してください。' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     )
   }
 
-  const client = new Anthropic({ apiKey: settings.claudeApiKey })
+  const client = new Anthropic({ apiKey })
 
   const stream = await client.messages.stream({
     model: settings.claudeModel || 'claude-sonnet-4-6',
     max_tokens: 8192,
-    system: 'あなたは優秀なAIアシスタントです。コードの質問にも、日常の質問にも丁寧に答えてください。',
+    system: SYSTEM_PROMPT,
     messages
   })
 
@@ -96,19 +100,14 @@ async function handleOpenAICompatible(
     headers['Authorization'] = `Bearer ${settings.customApiKey}`
   }
 
-  const systemMsg = { role: 'system', content: 'あなたは優秀なAIアシスタントです。コードの質問にも、日常の質問にも丁寧に答えてください。' }
-  const allMessages = [systemMsg, ...messages]
-
-  const body = isOllama
-    ? { model, messages: allMessages, stream: true }
-    : { model, messages: allMessages, stream: true }
+  const allMessages = [{ role: 'system', content: SYSTEM_PROMPT }, ...messages]
 
   let upstream: Response
   try {
     upstream = await fetch(endpoint, {
       method: 'POST',
       headers,
-      body: JSON.stringify(body)
+      body: JSON.stringify({ model, messages: allMessages, stream: true })
     })
   } catch {
     return new Response(

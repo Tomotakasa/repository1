@@ -12,8 +12,7 @@ export type LLMBackend = 'claude' | 'ollama' | 'openai-compatible'
 
 export interface Settings {
   llmBackend: LLMBackend
-  claudeApiKey: string
-  claudeModel: string
+  claudeModel: string       // APIキーはサーバー側環境変数で管理
   ollamaEndpoint: string
   ollamaModel: string
   customEndpoint: string
@@ -23,7 +22,6 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   llmBackend: 'claude',
-  claudeApiKey: '',
   claudeModel: 'claude-sonnet-4-6',
   ollamaEndpoint: 'http://localhost:11434',
   ollamaModel: 'phi3:mini',

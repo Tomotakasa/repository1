@@ -1,16 +1,18 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import { Settings, DEFAULT_SETTINGS, CLAUDE_MODELS, OLLAMA_MODELS, LLMBackend } from '@/lib/types'
 import { loadSettings, saveSettings, clearHistory } from '@/lib/storage'
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
-  const [showApiKey, setShowApiKey] = useState(false)
   const [showCustomKey, setShowCustomKey] = useState(false)
   const [saved, setSaved] = useState(false)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     setSettings(loadSettings())
@@ -29,6 +31,12 @@ export default function SettingsPage() {
   function handleClearHistory() {
     clearHistory()
     setShowClearConfirm(false)
+  }
+
+  async function handleLogout() {
+    setLoggingOut(true)
+    await fetch('/api/auth/logout', { method: 'POST' })
+    router.push('/login')
   }
 
   const backendOptions: { value: LLMBackend; label: string; desc: string }[] = [
@@ -75,27 +83,10 @@ export default function SettingsPage() {
           {/* Claude API 設定 */}
           {settings.llmBackend === 'claude' && (
             <Section title="Claude API 設定">
-              <Field label="APIキー" hint="Anthropic Console（console.anthropic.com）から取得">
-                <div className="relative">
-                  <input
-                    type={showApiKey ? 'text' : 'password'}
-                    value={settings.claudeApiKey}
-                    onChange={e => update({ claudeApiKey: e.target.value })}
-                    placeholder="sk-ant-..."
-                    className="w-full pr-10 input"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowApiKey(v => !v)}
-                    className="absolute inset-y-0 right-2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showApiKey ? <EyeOffIcon /> : <EyeIcon />}
-                  </button>
-                </div>
-                {settings.claudeApiKey && (
-                  <p className="text-xs text-green-600 mt-1">✅ APIキー設定済み</p>
-                )}
-              </Field>
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
+                <p className="font-semibold mb-1">🔒 APIキーはサーバーで管理</p>
+                <p>Claude APIキーはVercelの環境変数 <code className="bg-blue-100 px-1 rounded">CLAUDE_API_KEY</code> で安全に管理されています。ブラウザには送信されません。</p>
+              </div>
               <Field label="モデル">
                 <select
                   value={settings.claudeModel}
@@ -227,8 +218,19 @@ export default function SettingsPage() {
             {saved ? '✅ 保存しました' : '設定を保存'}
           </button>
 
-          <p className="text-xs text-gray-400 text-center mt-4">
-            🔒 設定はブラウザのlocalStorageに保存されます
+          {/* ログアウト */}
+          <Section title="🔐 アカウント">
+            <button
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="w-full py-2.5 px-4 rounded-xl border-2 border-gray-300 text-gray-600 font-medium hover:bg-gray-100 transition-colors"
+            >
+              {loggingOut ? 'ログアウト中...' : 'ログアウト（Face IDセッション終了）'}
+            </button>
+          </Section>
+
+          <p className="text-xs text-gray-400 text-center mt-2">
+            🔒 Claude APIキーはサーバー側で管理。その他の設定はlocalStorageに保存されます
           </p>
         </div>
       </main>
