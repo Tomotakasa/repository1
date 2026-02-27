@@ -155,6 +155,8 @@ export default function ChatPage() {
             <p className="text-xs text-gray-400">
               {settings.llmBackend === 'claude'
                 ? `Claude API（${settings.claudeModel}）`
+                : settings.llmBackend === 'groq'
+                ? `Groq（${settings.groqModel || 'llama-3.1-8b-instant'}）`
                 : settings.llmBackend === 'ollama'
                 ? `Ollama（${settings.ollamaModel}）`
                 : `カスタムAPI（${settings.customModel || '未設定'}）`}

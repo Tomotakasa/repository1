@@ -6,13 +6,15 @@ export const runtime = 'edge'
 interface RequestBody {
   messages: { role: 'user' | 'assistant'; content: string }[]
   settings: {
-    llmBackend: 'claude' | 'ollama' | 'openai-compatible'
+    llmBackend: 'claude' | 'ollama' | 'openai-compatible' | 'groq'
     claudeModel: string       // APIキーはサーバー側環境変数で管理
     ollamaEndpoint: string
     ollamaModel: string
     customEndpoint: string
     customApiKey: string
     customModel: string
+    groqApiKey: string
+    groqModel: string
   }
 }
 
@@ -25,6 +27,8 @@ export async function POST(req: NextRequest) {
 
   if (settings.llmBackend === 'claude') {
     return handleClaude(messages, settings)
+  } else if (settings.llmBackend === 'groq') {
+    return handleGroq(messages, settings)
   } else {
     return handleOpenAICompatible(messages, settings)
   }
@@ -62,6 +66,85 @@ async function handleClaude(
             chunk.delta.type === 'text_delta'
           ) {
             controller.enqueue(encoder.encode(chunk.delta.text))
+          }
+        }
+      } finally {
+        controller.close()
+      }
+    }
+  })
+
+  return new Response(readable, {
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+  })
+}
+
+async function handleGroq(
+  messages: RequestBody['messages'],
+  settings: RequestBody['settings']
+) {
+  if (!settings.groqApiKey) {
+    return new Response(
+      JSON.stringify({ error: 'GroqのAPIキーが設定されていません。設定画面で入力してください。' }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+
+  const endpoint = 'https://api.groq.com/openai/v1/chat/completions'
+  const model = settings.groqModel || 'llama-3.1-8b-instant'
+  const allMessages = [{ role: 'system', content: SYSTEM_PROMPT }, ...messages]
+
+  let upstream: Response
+  try {
+    upstream = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${settings.groqApiKey}`
+      },
+      body: JSON.stringify({ model, messages: allMessages, stream: true })
+    })
+  } catch {
+    return new Response(
+      JSON.stringify({ error: 'Groq APIに接続できませんでした。' }),
+      { status: 502, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+
+  if (!upstream.ok) {
+    const text = await upstream.text()
+    return new Response(
+      JSON.stringify({ error: `Groq APIエラー (${upstream.status}): ${text}` }),
+      { status: upstream.status, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+
+  const encoder = new TextEncoder()
+  const readable = new ReadableStream({
+    async start(controller) {
+      const reader = upstream.body!.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() ?? ''
+
+          for (const line of lines) {
+            const trimmed = line.trim()
+            if (!trimmed || !trimmed.startsWith('data: ')) continue
+            const data = trimmed.slice(6)
+            if (data === '[DONE]') continue
+            try {
+              const json = JSON.parse(data)
+              const text = json.choices?.[0]?.delta?.content
+              if (text) controller.enqueue(encoder.encode(text))
+            } catch { /* ignore */ }
           }
         }
       } finally {

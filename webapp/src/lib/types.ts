@@ -8,7 +8,7 @@ export interface ChatMessage {
   isStreaming?: boolean
 }
 
-export type LLMBackend = 'claude' | 'ollama' | 'openai-compatible'
+export type LLMBackend = 'claude' | 'ollama' | 'openai-compatible' | 'groq'
 
 export interface Settings {
   llmBackend: LLMBackend
@@ -18,6 +18,8 @@ export interface Settings {
   customEndpoint: string
   customApiKey: string
   customModel: string
+  groqApiKey: string
+  groqModel: string
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -27,7 +29,9 @@ export const DEFAULT_SETTINGS: Settings = {
   ollamaModel: 'phi3:mini',
   customEndpoint: '',
   customApiKey: '',
-  customModel: ''
+  customModel: '',
+  groqApiKey: '',
+  groqModel: 'llama-3.1-8b-instant'
 }
 
 export const CLAUDE_MODELS = [
@@ -42,4 +46,11 @@ export const OLLAMA_MODELS = [
   { id: 'llama3.2:3b', label: 'llama3.2:3b（約2.0GB）- Meta製' },
   { id: 'llama3.1:8b', label: 'llama3.1:8b（約4.7GB）- 高品質' },
   { id: 'qwen2.5:0.5b', label: 'qwen2.5:0.5b（約0.4GB）- 超軽量' }
+]
+
+export const GROQ_MODELS = [
+  { id: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B Instant（推奨・最速）' },
+  { id: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B（高品質）' },
+  { id: 'mixtral-8x7b-32768', label: 'Mixtral 8x7B（バランス型）' },
+  { id: 'gemma2-9b-it', label: 'Gemma2 9B（Google製）' }
 ]

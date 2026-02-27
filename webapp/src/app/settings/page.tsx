@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
-import { Settings, DEFAULT_SETTINGS, CLAUDE_MODELS, OLLAMA_MODELS, LLMBackend } from '@/lib/types'
+import { Settings, DEFAULT_SETTINGS, CLAUDE_MODELS, OLLAMA_MODELS, GROQ_MODELS, LLMBackend } from '@/lib/types'
 import { loadSettings, saveSettings, clearHistory } from '@/lib/storage'
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
   const [showCustomKey, setShowCustomKey] = useState(false)
+  const [showGroqKey, setShowGroqKey] = useState(false)
   const [saved, setSaved] = useState(false)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
@@ -41,6 +42,7 @@ export default function SettingsPage() {
 
   const backendOptions: { value: LLMBackend; label: string; desc: string }[] = [
     { value: 'claude', label: 'Claude API', desc: 'Anthropicのクラウド（最高品質）' },
+    { value: 'groq', label: 'Groq（完全無料）', desc: '高速・無料APIキーで即使用可能' },
     { value: 'ollama', label: 'Ollama（ローカル）', desc: 'Mac上で完全オフライン実行' },
     { value: 'openai-compatible', label: 'OpenAI互換API', desc: 'カスタムサーバー対応' }
   ]
@@ -101,11 +103,55 @@ export default function SettingsPage() {
             </Section>
           )}
 
+          {/* Groq 設定 */}
+          {settings.llmBackend === 'groq' && (
+            <Section title="Groq 設定（完全無料）">
+              <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-800">
+                <p className="font-semibold mb-2">無料APIキーの取得方法</p>
+                <ol className="list-decimal list-inside space-y-1">
+                  <li><a href="https://console.groq.com" target="_blank" rel="noopener noreferrer" className="underline">console.groq.com</a> でアカウント作成（無料）</li>
+                  <li>「API Keys」メニューから新しいキーを作成</li>
+                  <li>コピーして下記に貼り付け</li>
+                </ol>
+                <p className="mt-2 text-xs text-green-700">無料枠: 1日14,400リクエスト / 毎分30回まで</p>
+              </div>
+              <Field label="APIキー">
+                <div className="relative">
+                  <input
+                    type={showGroqKey ? 'text' : 'password'}
+                    value={settings.groqApiKey}
+                    onChange={e => update({ groqApiKey: e.target.value })}
+                    placeholder="gsk_..."
+                    className="w-full pr-10 input"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowGroqKey(v => !v)}
+                    className="absolute inset-y-0 right-2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showGroqKey ? <EyeOffIcon /> : <EyeIcon />}
+                  </button>
+                </div>
+              </Field>
+              <Field label="モデル">
+                <select
+                  value={settings.groqModel}
+                  onChange={e => update({ groqModel: e.target.value })}
+                  className="w-full input"
+                >
+                  {GROQ_MODELS.map(m => (
+                    <option key={m.id} value={m.id}>{m.label}</option>
+                  ))}
+                </select>
+              </Field>
+            </Section>
+          )}
+
           {/* Ollama 設定 */}
           {settings.llmBackend === 'ollama' && (
             <Section title="Ollama 設定">
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 text-sm text-amber-800">
-                <p className="font-semibold mb-2">Macでの起動方法</p>
+                <p className="font-semibold mb-2">Macでの起動方法（同じWi-Fi内）</p>
                 <ol className="list-decimal list-inside space-y-1">
                   <li>Ollamaをインストール: <code className="bg-amber-100 px-1 rounded">brew install ollama</code></li>
                   <li>モデルを取得: <code className="bg-amber-100 px-1 rounded">ollama pull phi3:mini</code></li>
@@ -113,7 +159,17 @@ export default function SettingsPage() {
                   <li>MacのIPアドレスを下記に入力</li>
                 </ol>
               </div>
-              <Field label="エンドポイントURL" hint="同じWi-Fi上のMacのIPアドレスを指定">
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4 text-sm text-blue-800">
+                <p className="font-semibold mb-2">外出先からも使う場合（Tailscale）</p>
+                <ol className="list-decimal list-inside space-y-1">
+                  <li><a href="https://tailscale.com" target="_blank" rel="noopener noreferrer" className="underline">tailscale.com</a> で無料アカウント作成</li>
+                  <li>Mac: <code className="bg-blue-100 px-1 rounded">brew install tailscale</code> → <code className="bg-blue-100 px-1 rounded">tailscale up</code></li>
+                  <li>iPhone: App StoreでTailscaleをインストール → 同じアカウントでログイン</li>
+                  <li>MacのTailscale IPアドレス（例: <code className="bg-blue-100 px-1 rounded">100.x.x.x</code>）を下記に入力</li>
+                </ol>
+                <p className="mt-2 text-xs text-blue-700">完全無料・どこからでもアクセス可能</p>
+              </div>
+              <Field label="エンドポイントURL" hint="同じWi-Fi: MacのローカルIP / 外出先: TailscaleのIP">
                 <input
                   type="text"
                   value={settings.ollamaEndpoint}
