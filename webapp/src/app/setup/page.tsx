@@ -2,10 +2,9 @@ import { redirect } from 'next/navigation'
 import SetupClient from './SetupClient'
 
 export default function SetupPage() {
-  // すでに登録済みならログインへ
-  const hasCredential =
-    !!process.env.WEBAUTHN_CREDENTIAL && process.env.WEBAUTHN_CREDENTIAL.trim() !== ''
-  if (hasCredential) {
+  const isConfigured =
+    !!process.env.ADMIN_PASSWORD && process.env.ADMIN_PASSWORD.trim() !== ''
+  if (isConfigured) {
     redirect('/login')
   }
   return <SetupClient />
